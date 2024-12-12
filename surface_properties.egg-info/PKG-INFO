@@ -1,0 +1,14 @@
+Metadata-Version: 1.2
+Name: surface-properties
+Version: 0.1
+Summary: A package for molecular dynamics analysis
+Home-page: UNKNOWN
+Author: Your Name
+Author-email: u1266568@utah.edu
+License: MIT
+Description: UNKNOWN
+Platform: UNKNOWN
+Classifier: Programming Language :: Python :: 3
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Operating System :: OS Independent
+Requires-Python: >=3.6
