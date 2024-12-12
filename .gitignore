@@ -1,0 +1,62 @@
+# Python compiled files
+*.py[cod]
+__pycache__/
+*.so
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints/
+
+# Virtual environments
+env/
+venv/
+*.env
+*.venv
+
+# Python egg and build files
+*.egg-info/
+dist/
+build/
+
+# Logs and database files
+*.log
+*.sql
+*.sqlite3
+
+# OS-specific files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+
+# Coverage and testing
+.coverage
+*.cover
+*.coverage.*
+.hypothesis/
+
+# PyInstaller
+*.spec
+
+# Byte-compiled files
+*.pyc
+
+# Ignore data files
+*.h5
+*.csv
+*.dat
+*.pkl
+*.json
+*.db
+
+# Temporary files
+*.tmp
+*.temp
+*.bak
+*.old
+*.orig
+
+# Local package files
+local_settings.py
