@@ -11,4 +11,5 @@ surface_properties/analysis/__init__.py
 surface_properties/analysis/opc.py
 surface_properties/analysis/order.py
 tests/__init__.py
-tests/run.py
+tests/test_inter.py
+tests/test_order.py

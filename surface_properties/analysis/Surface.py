@@ -39,7 +39,19 @@ class MembraneAnalysisBase:
         }
         return groups
     
+    # def calculate_strong_resids(self, trio_pos, utz, ltz, names, resids, min_oxygens=3, max_oxygens=6):
+    #     boolArray = ((trio_pos[:, 2] > utz) | (trio_pos[:, 2] < ltz)) & np.char.startswith(names, 'O')
+    #     strong_resids = resids[boolArray]
+    #     r = np.unique(strong_resids, return_counts=True)
+    #     boolArray = (r[1] >= min_oxygens) & (r[1] <= max_oxygens)
+    #     strong_resids = r[0][boolArray]
+    #     counts = r[1][boolArray]
+    #     return strong_resids, counts
+    
     def calculate_strong_resids(self, trio_pos, utz, ltz, names, resids, min_oxygens=3, max_oxygens=6):
+        if len(trio_pos) != len(names):
+            raise ValueError("Mismatch between trio_pos and names lengths.")
+            
         boolArray = ((trio_pos[:, 2] > utz) | (trio_pos[:, 2] < ltz)) & np.char.startswith(names, 'O')
         strong_resids = resids[boolArray]
         r = np.unique(strong_resids, return_counts=True)
@@ -47,6 +59,7 @@ class MembraneAnalysisBase:
         strong_resids = r[0][boolArray]
         counts = r[1][boolArray]
         return strong_resids, counts
+
     
 
     def density_frame(self, pos, mass, pbc, bins):

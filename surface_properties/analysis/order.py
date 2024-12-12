@@ -13,13 +13,17 @@ class OrderParameters:
             raise ValueError("Either a selection string or a dynamic residue selection callable must be provided.")
         if selection is not None and get_strong_residues is not None:
             raise ValueError("Provide either a selection string or a get_strong_residues callable, not both.")
+        if end_frame is not None and end_frame <= start_frame:
+            raise ValueError("end_frame must be greater than start_frame")
+
         self.u = u
         self.atomlists = atomlists
         self.selection = selection
         self.start_frame = start_frame
         self.end_frame = end_frame
-        self.get_strong_residues = get_strong_residues  
+        self.get_strong_residues = get_strong_residues
         self.C_numbers, self.Cs, self.Hs_f, self.repeat = self.process_atom_lists()
+
 
     # def process_atom_lists(self):
     #     C_numbers = []
