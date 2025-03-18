@@ -18,3 +18,6 @@ The **total interdigitation** $\lambda_{ov}$ is obtained by integrating the over
 $$
 \lambda_{ov} = \int_0^L \rho_{ov}(z) \,dz
 $$
+
+
+![image](https://github.com/user-attachments/assets/e0f088e5-439a-4be5-9205-defefaec8541)
