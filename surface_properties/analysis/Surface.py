@@ -13,54 +13,58 @@ class MembraneAnalysisBase:
         self.NL = NL
         self.water = water
 
-    def setup_atom_groups(self, use_ls2=False, use_us2=False):
-        halfz = self.u.dimensions[2] / 2
-        C2 = ' '.join([f'C2{i}' for i in range(2, 22)])
-        C3 = ' '.join([f'C3{i}' for i in range(2, 22)])
-        tail_atoms = ' '.join(C2.split() + C3.split())
+    def setup_atom_groups(self, 
+                      extra_lipids=None, 
+                      tail_atoms=None, 
+                      headgroup_atoms=None, 
+                      leaflet_property="prop z", 
+                      use_ls2=False, 
+                      use_us2=False):
 
-        lipid_selection = ' or '.join([f'resname {lipid}' for lipid in self.lipids])
-        us = f'(same residue as ({lipid_selection}) and name P and prop z>{halfz}) and (name {tail_atoms})'
-        ls = f'(same residue as ({lipid_selection}) and name P and prop z<{halfz}) and (name {tail_atoms})'
+        # Combine base lipids with additional lipids
+        selected_lipids = self.lipids + (extra_lipids if extra_lipids else [])
+        lipid_selection = " or ".join(f"resname {lipid}" for lipid in selected_lipids)
 
-        us2 = f'(same residue as ({lipid_selection}) and name C24 and prop z>{halfz})'
-        ls2 = f'(same residue as ({lipid_selection}) and name C24 and prop z<{halfz})'
+        if tail_atoms is None:
+            tail_atoms = [f"C2{i}" for i in range(2, 22)] + [f"C3{i}" for i in range(2, 22)]
+        tail_atoms_str = " ".join(tail_atoms)
 
-        # Use instance attributes to select upper and lower leaflets
-        upper_selection = us2 if use_us2 else us
-        lower_selection = ls2 if use_ls2 else ls
+        if headgroup_atoms is None:
+            headgroup_atoms = ["P"]
+        headgroup_atoms_str = " ".join(headgroup_atoms)
+
+        halfz = self.u.dimensions[2] / 2  
+        leaflet_selection = {
+            "upper": f"(same residue as ({lipid_selection}) and name {headgroup_atoms_str} and {leaflet_property}>{halfz}) and name {tail_atoms_str}",
+            "lower": f"(same residue as ({lipid_selection}) and name {headgroup_atoms_str} and {leaflet_property}<{halfz}) and name {tail_atoms_str}",
+            "upper_alt": f"(same residue as ({lipid_selection}) and name C24 and {leaflet_property}>{halfz})",
+            "lower_alt": f"(same residue as ({lipid_selection}) and name C24 and {leaflet_property}<{halfz})"
+        }
+        upper_selection = leaflet_selection["upper_alt"] if use_us2 else leaflet_selection["upper"]
+        lower_selection = leaflet_selection["lower_alt"] if use_ls2 else leaflet_selection["lower"]
 
         groups = {
-            'memb': self.u.select_atoms(lipid_selection),
-            'umemb': self.u.select_atoms(upper_selection),
-            'lmemb': self.u.select_atoms(lower_selection),
-            'trio': self.u.select_atoms(f'resname {self.NL}'),
-            'water': self.u.select_atoms(f'resname {self.water}')
+            "memb": self.u.select_atoms(lipid_selection),  # Membrane lipid selection
+            "umemb": self.u.select_atoms(upper_selection),  # Upper leaflet selection
+            "lmemb": self.u.select_atoms(lower_selection),  # Lower leaflet selection
+            "trio": self.u.select_atoms(f"resname {self.NL}"),  # Neutral lipid selection
+            "water": self.u.select_atoms(f"resname {self.water}")  # Water selection
         }
-        return groups
-    
-    # def calculate_strong_resids(self, trio_pos, utz, ltz, names, resids, min_oxygens=3, max_oxygens=6):
-    #     boolArray = ((trio_pos[:, 2] > utz) | (trio_pos[:, 2] < ltz)) & np.char.startswith(names, 'O')
-    #     strong_resids = resids[boolArray]
-    #     r = np.unique(strong_resids, return_counts=True)
-    #     boolArray = (r[1] >= min_oxygens) & (r[1] <= max_oxygens)
-    #     strong_resids = r[0][boolArray]
-    #     counts = r[1][boolArray]
-    #     return strong_resids, counts
-    
-    def calculate_strong_resids(self, trio_pos, utz, ltz, names, resids, min_oxygens=3, max_oxygens=6):
-        if len(trio_pos) != len(names):
-            raise ValueError("Mismatch between trio_pos and names lengths.")
-            
-        boolArray = ((trio_pos[:, 2] > utz) | (trio_pos[:, 2] < ltz)) & np.char.startswith(names, 'O')
-        strong_resids = resids[boolArray]
-        r = np.unique(strong_resids, return_counts=True)
-        boolArray = (r[1] >= min_oxygens) & (r[1] <= max_oxygens)
-        strong_resids = r[0][boolArray]
-        counts = r[1][boolArray]
-        return strong_resids, counts
+        print("Final selected tail atoms in memb:", self.u.select_atoms(f"name {tail_atoms_str}").names)  # Debugging
 
-    
+        return groups
+
+    def calculate_strong_resids(self, trio_pos, utz, ltz, names, resids, min_oxygens=3, max_oxygens=6, strong_atom_prefix="O"):
+
+        if trio_pos.shape[0] != names.shape[0]:
+            raise ValueError("Mismatch between trio_pos and names lengths.")
+        # oxygen_mask = ((trio_pos[:, 2] > utz) | (trio_pos[:, 2] < ltz)) & np.char.startswith(names, "O")
+        strong_mask = ((trio_pos[:, 2] > utz) | (trio_pos[:, 2] < ltz)) & np.char.startswith(names, strong_atom_prefix)
+        strong_resids, counts = np.unique(resids[strong_mask], return_counts=True)
+
+        valid_mask = (counts >= self.min_oxygens) & (counts <= self.max_oxygens)
+        # valid_mask = (counts >= min_oxygens) & (counts <= max_oxygens)
+        return strong_resids[valid_mask], counts[valid_mask]
 
     def density_frame(self, pos, mass, pbc, bins):
         dz = bins[1] - bins[0]
@@ -162,119 +166,127 @@ class LifetimeAnalysis(MembraneAnalysisBase):
 
 
 class InterdigitationAnalysis(MembraneAnalysisBase):
-    def __init__(self, universe, lipids, NL, water, strong_resid_list_name='strong_resid_list'):
+    def __init__(self, universe, lipids, NL, water, strong_resid_list_name='strong_resid_list',
+                 extra_lipids=None, tail_atoms=None, headgroup_atoms=None, leaflet_property="prop z",
+                 use_ls2=False, use_us2=False, min_oxygens=3, max_oxygens=6, strong_atom_prefix="O"):
+
         super().__init__(universe, lipids, NL, water)
         self.strong_resid_list_name = strong_resid_list_name
 
-    def calculate_densities(self, groups, pbc, bins):
-        # Calculate density profiles for each component
-        d0 = self.density_frame(groups['memb'].positions[:, 2], groups['memb'].masses, pbc=pbc, bins=bins)
-        d1 = self.density_frame(groups['trio'].positions[:, 2], groups['trio'].masses, pbc=pbc, bins=bins)
-        d_water = self.density_frame(groups['water'].positions[:, 2], groups['water'].masses, pbc=pbc, bins=bins)
+        self.extra_lipids = extra_lipids
+        self.tail_atoms = tail_atoms
+        self.headgroup_atoms = headgroup_atoms
+        self.leaflet_property = leaflet_property
+        self.use_ls2 = use_ls2
+        self.use_us2 = use_us2
+        self.min_oxygens = min_oxygens
+        self.max_oxygens = max_oxygens
+        self.strong_atom_prefix = strong_atom_prefix
+
+        self.groups=None
+
+    def setup_groups(self, extra_lipids=None, tail_atoms=None, headgroup_atoms=None,
+                    leaflet_property="prop z", use_ls2=False, use_us2=False):
+        # Ensure tail_atoms is always a list
+        if tail_atoms is not None:
+            self.tail_atoms = tail_atoms  # Store if explicitly provided
+        else:
+            self.tail_atoms = [f"C2{i}" for i in range(2, 22)] + [f"C3{i}" for i in range(2, 22)]  # Default list
+
+        print(f"Using tail atoms: {self.tail_atoms}")
+
+        self.groups = self.setup_atom_groups(
+            extra_lipids=extra_lipids,
+            tail_atoms=self.tail_atoms,
+            headgroup_atoms=headgroup_atoms,
+            leaflet_property=leaflet_property,
+            use_ls2=use_ls2,
+            use_us2=use_us2
+        )
+        print("setup_groups() completed!")
+
+
+    def calculate_densities(self, pbc, bins):
+
+        memb_group = self.groups['memb'].select_atoms(f"name {' '.join(self.tail_atoms)}")  # Select atoms correctly
+
+        d0 = self.density_frame(memb_group.positions[:, 2], memb_group.masses, pbc=pbc, bins=bins)
+        d1 = self.density_frame(self.groups['trio'].positions[:, 2], self.groups['trio'].masses, pbc=pbc, bins=bins)
+        d_water = self.density_frame(self.groups['water'].positions[:, 2], self.groups['water'].masses, pbc=pbc, bins=bins)
+
         return d0, d1, d_water
 
+    def calculate_densities_for_resids(self, strong_resids, pbc, bins, invert=False):
 
-    def calculate_densities_for_resids(self, trio_pos, resids, strong_resids, groups, pbc, bins, invert=False):
+        trio_pos = self.groups['trio'].positions
+        resids = self.groups['trio'].resids
         boolArray = np.isin(resids, strong_resids, invert=invert)
-        pp = trio_pos[boolArray]
-        mm = groups['trio'].masses[boolArray]
-        return self.density_frame(pp[:, 2], mm, pbc, bins)
+        return self.density_frame(trio_pos[boolArray, 2], self.groups['trio'].masses[boolArray], pbc, bins)
 
+    def interdigit(self, nbins=50, b=0, e=None):
 
-    def interdigit(self, nbins=50, nblocks=5, b=0, e=None):
+        if self.groups is None:
+            raise ValueError("setup_groups() must be called before interdigit().")
+
         times, zs, total_inter, strong_inter, weak_inter = ([] for _ in range(5))
         d0_densities, d1_densities, d2_densities, d3_densities, d_water_series = ([] for _ in range(5))
         total_ov, strong_ov, weak_ov, strong_num = ([] for _ in range(4))
-        strong_residue_ids = [] # List of strong residue IDs
-        groups = self.setup_atom_groups()
-        names = groups['trio'].names.astype(str)
-        resids = groups['trio'].resids
+        strong_residue_ids = []
+
+        names = self.groups['trio'].names.astype(str)
+        resids = self.groups['trio'].resids
         numP = self.u.select_atoms('name P').n_atoms
 
-        # Loop over frames
         trajectory = tqdm(self.u.trajectory[b:e], desc='Processing frames', unit='frame')
         for ts in trajectory:
             pbc = self.u.dimensions
             bins = np.linspace(0, pbc[2], nbins + 1)
             dz = bins[1] - bins[0]
-            trio_pos = groups['trio'].positions
-            utz = np.mean(groups['umemb'].positions[:, 2])
-            ltz = np.mean(groups['lmemb'].positions[:, 2])
-            d0, d1, d_water = self.calculate_densities(groups, pbc, bins)
+
+            trio_pos = self.groups['trio'].positions
+            utz = np.mean(self.groups['umemb'].positions[:, 2])
+            ltz = np.mean(self.groups['lmemb'].positions[:, 2])
+
+            d0, d1, d_water = self.calculate_densities(pbc, bins)
             d0_densities.append(d0)
             d1_densities.append(d1)
             d_water_series.append(d_water)
+
             tov, tin = self.calculate_overlap_and_inter(d0, d1, dz)
             total_ov.append(tov)
             total_inter.append(tin)
 
-            # Calculate strong residues and densities
-            strong_resids, _ = self.calculate_strong_resids(trio_pos, utz, ltz, names, resids)
-            d2 = self.calculate_densities_for_resids(trio_pos, resids, strong_resids, groups, pbc, bins)
+            strong_resids, _ = self.calculate_strong_resids(trio_pos, utz, ltz, names, resids, strong_atom_prefix=self.strong_atom_prefix)
+            d2 = self.calculate_densities_for_resids(strong_resids, pbc, bins)
             d2_densities.append(d2)
+
             sov, sin = self.calculate_overlap_and_inter(d0, d2, dz)
             strong_ov.append(sov)
             strong_inter.append(sin)
 
-            strong_residue_ids.append(strong_resids.tolist()) # convert to list
+            strong_residue_ids.append(strong_resids.tolist())
             with open(f'{self.strong_resid_list_name}.txt', 'w') as f:
                 f.write('\n'.join(map(str, strong_residue_ids)))
 
-            
-
-            # Inverted residues densities
-            d3 = self.calculate_densities_for_resids(trio_pos, resids, strong_resids, groups, pbc, bins, invert=True)
+            d3 = self.calculate_densities_for_resids(strong_resids, pbc, bins, invert=True)
             d3_densities.append(d3)
+
             wov, win = self.calculate_overlap_and_inter(d0, d3, dz)
             weak_ov.append(wov)
             weak_inter.append(win)
+
             strong_num.append(len(strong_resids))
             times.append(ts.time / 1000)
             zs.append(pbc[2] / 10)
 
         XX = np.linspace(0, np.mean(zs), nbins)
-        strong_num = np.array(strong_num)  # Convert to NumPy array for division
         results = {
-            'inter': {
-                'total': np.transpose([times, total_inter]),
-                'strong': np.transpose([times, strong_inter]),
-                'weak': np.transpose([times, weak_inter]),
-            },
-            'ov': {
-                'total': np.transpose([XX, np.mean(total_ov, axis=0)]),
-                'strong': np.transpose([XX, np.mean(strong_ov, axis=0)]),
-                'weak': np.transpose([XX, np.mean(weak_ov, axis=0)]),
-            },
-            'ratio': {
-                'num': np.transpose([times, strong_num]),
-                'trio-to-pl': np.transpose([times, strong_num / numP]),
-                'trio-to-pl+trio': np.transpose([times, strong_num / (numP + strong_num)]),
-            },
-            'density': {
-                'PL': np.transpose([XX, np.mean(d0_densities, axis=0)]),
-                'TRIO': np.transpose([XX, np.mean(d1_densities, axis=0)]),
-                'SURF-TRIO': np.transpose([XX, np.mean(d2_densities, axis=0)]),
-                'CORE-TRIO': np.transpose([XX, np.mean(d3_densities, axis=0)]),
-                'water': np.transpose([XX, np.mean(d_water_series, axis=0)]),
-            },
-            'strong_residues': strong_residue_ids # List of strong residue IDs
+            'inter': {'total': np.transpose([times, total_inter]), 'strong': np.transpose([times, strong_inter]), 'weak': np.transpose([times, weak_inter])},
+            'ov': {'total': np.transpose([XX, np.mean(total_ov, axis=0)]), 'strong': np.transpose([XX, np.mean(strong_ov, axis=0)]), 'weak': np.transpose([XX, np.mean(weak_ov, axis=0)])},
+            'ratio': {'num': np.transpose([times, strong_num]), 'trio-to-pl': np.transpose([times, np.array(strong_num) / numP])},
+            'density': {'PL': np.transpose([XX, np.mean(d0_densities, axis=0)]), 'TRIO': np.transpose([XX, np.mean(d1_densities, axis=0)]), 'water': np.transpose([XX, np.mean(d_water_series, axis=0)])},
+            'strong_residues': strong_residue_ids
         }
 
         print("units: Z (nm), interdigitation (nm), time (ns), density (g/m3)")
         return results
-
-    def save_results(self, results, base_dir):
-        if not os.path.exists(base_dir):
-            os.makedirs(base_dir)
-        for key1 in results.keys():
-            new_dir = os.path.join(base_dir, key1)
-            if not os.path.exists(new_dir):
-                os.makedirs(new_dir)
-
-            for key2 in results[key1].keys():
-                # Define new file path
-                file_path = os.path.join(new_dir, f'interdigit_.{key1}.{key2}.dat')
-                # Save the file
-                np.savetxt(file_path, results[key1][key2])
-
-        print(f"All files have been saved in the directory: {base_dir}")
