@@ -20,4 +20,12 @@ $$
 $$
 
 
+The example below is for lipid droplet trilayers. However, this can be done with differing bilayer or membrane systems
+
+
 ![image](https://github.com/user-attachments/assets/e0f088e5-439a-4be5-9205-defefaec8541)
+
+We can then determine the diferent types of interdigition:
+
+![image](https://github.com/user-attachments/assets/d3f3077e-5357-483c-9cd7-ce5b22383db7)
+
