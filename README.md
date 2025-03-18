@@ -1,6 +1,8 @@
 # surface_properties
 This is used for calculating the surface properties of membrane (bilayer of lipid droplet systems). This includes tail order parameters (Scd), surface triacylglycerol lifetimes, and interdigitation analysis.
 
-ρ_ov (z)=4 (ρ_TG (z)*ρ_PL (z))/〖(ρ_TG (z)+ρ_PL (z))〗^2 
+The density overlap function is defined as:
 
-λ_ov=∫_0^L▒〖ρ_ov (z)dz〗
+$$
+\rho_{ov}(z) = 4 \frac{\rho_{TG}(z) \rho_{PL}(z)}{(\rho_{TG}(z) + \rho_{PL}(z))^2}
+$$
