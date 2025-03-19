@@ -35,15 +35,15 @@ We can then determine the diferent types of interdigition. For example, in a LD 
 Strong interdigitation has correlation with the area-per-lipid of monolayer systems:
 ![image](https://github.com/user-attachments/assets/5162b67b-e262-4baf-8f7f-9cbd95f1b6e4)
 
-Got it! Here’s your **README documentation** in the **correct LaTeX Markdown format** for direct pasting:
-
----
 
 # **Lipid Tail Order Parameter (\( S_{cd} \)) Analysis**
-The **order parameter \( S_{cd} \)** quantifies the **alignment of lipid tail C-H bonds** relative to the **membrane normal (z-axis)**. It provides insight into:
+The **order parameter** \( S_{cd} \) quantifies the **alignment of lipid tail C-H bonds** relative to the **membrane normal (z-axis)**. It provides insight into:
+
 - **Lipid packing and membrane fluidity**.
-- **Bilayer rigidity** under different conditions.
+- **Bilayer rigidity** under different conditions**.
 - **Effects of neutral lipids (e.g., TRIO) on lipid ordering**.
+
+---
 
 ## **Order Parameter Definition**
 The order parameter is defined as:
@@ -53,23 +53,24 @@ S_{cd} = \frac{1}{2} \left( 3 \langle \cos^2 \theta \rangle - 1 \right)
 $$
 
 Where:
+
 - \( \theta \) is the **angle between the C-H bond vector and the membrane normal (z-axis)**.
 - \( \langle \cdot \rangle \) represents an **ensemble average** over time and molecules.
 
-### **Expected Values:**
+### **Expected Values**
 - \( S_{cd} \approx 1.0 \) → **Highly ordered lipid tails** (rigid packing).
 - \( S_{cd} \approx 0.0 \) → **Disordered lipid tails** (fluid-like).
-- **Negative values** indicate tilt **away from the normal**.
+- **Negative values** indicate **tilt away from the normal**.
 
 ---
 
 ## **Methodology**
 This calculation is performed using **MDAnalysis** and follows these steps:
 
-1. **Identify Lipid Tails:** Select **C-H pairs** in lipid acyl chains.
-2. **Compute Bond Orientations:** Measure **angles** between **C-H vectors** and the membrane normal.
-3. **Average Over Time:** Compute **\( S_{cd} \)** values per **carbon index** across all frames.
-4. **Output Results:** Save results in a `.txt` file.
+1. **Identify Lipid Tails**: Select **C-H pairs** in lipid acyl chains.
+2. **Compute Bond Orientations**: Measure **angles** between **C-H vectors** and the membrane normal.
+3. **Average Over Time**: Compute **\( S_{cd} \)** values per **carbon index** across all frames.
+4. **Output Results**: Save results in a `.txt` file.
 
 ---
 
@@ -101,8 +102,9 @@ This will generate a text file **`order_parameters.txt`** containing **\( S_{cd}
 
 ## **Interpreting the Results**
 The output contains **two columns**:
-- **Column 1:** Carbon index \( C_i \).
-- **Column 2:** Order parameter \( S_{cd} \).
+
+- **Column 1**: Carbon index \( C_i \).
+- **Column 2**: Order parameter \( S_{cd} \).
 
 Example:
 ```
@@ -134,28 +136,12 @@ plt.grid()
 plt.show()
 ```
 
-### **What to Look For:**
-- **High \( S_{cd} \) (~0.8–1.0) at tail ends** → Tighter packing.
-- **Lower \( S_{cd} \) at mid-chain** → More disorder.
-- **Drop in \( S_{cd} \) near the headgroup** → Increased mobility.
+### **What to Look For**
+- **High \( S_{cd} \) (~0.8–1.0) at tail ends** → **Tighter packing**.
+- **Lower \( S_{cd} \) at mid-chain** → **More disorder**.
+- **Drop in \( S_{cd} \) near the headgroup** → **Increased mobility**.
 
 ---
-
-## **Why Is This Important?**
-- **TRIO insertion into lipid monolayers** **reduces \( S_{cd} \)** → increased fluidity.
-- **Bilayers with high \( S_{cd} \) are more rigid**, affecting lipid mobility.
-- **Different lipids (e.g., POPC vs. DOPE)** show distinct **\( S_{cd} \)** profiles, impacting biological function.
-
----
-
-## **Future Extensions**
-- Compute **\( S_{cd} \)** for different lipid species (e.g., DOPE, DPPC).
-- Compare **TRIO-exposed vs. TRIO-free regions**.
-- Analyze **bilayers vs. monolayers**.
-
----
-
-This is now in the **exact format** you can **paste directly into your README** with proper **Markdown LaTeX formatting**! 🚀  
 
 Would you like me to add **any specific examples** or **references to lipid order in literature**?
 
