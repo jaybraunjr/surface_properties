@@ -22,12 +22,16 @@ $$
 $$
 
 
-The example below is for lipid droplet trilayers. However, this can be done with differing bilayer or membrane systems
+The example below is for lipid droplet trilayers. However, this can be done with differing bilayer or membrane systems.
 
 
 ![image](https://github.com/user-attachments/assets/e0f088e5-439a-4be5-9205-defefaec8541)
 
-We can then determine the diferent types of interdigition:
+
+We can then determine the diferent types of interdigition. For example, in a LD monolayer, there is generally triolein interacting with the phospholipids. There would be weak interdigitation (tails of the trioleins interdigitating with the PL), and strong interdigitation (3 or more oxygens of triolein glycerol above z-dim midpoint of PL tails). This is fully modifiable by lipid type, tail chain definition, and strong int. definiton in the functions.
 
 ![image](https://github.com/user-attachments/assets/d3f3077e-5357-483c-9cd7-ce5b22383db7)
+
+Strong interdigitation has correlation with the area-per-lipid of monolayer systems:
+![image](https://github.com/user-attachments/assets/5162b67b-e262-4baf-8f7f-9cbd95f1b6e4)
 
