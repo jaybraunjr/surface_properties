@@ -1,5 +1,5 @@
 # surface_properties
-Under development, code used for Drude paper, soon to be published.
+Under development, code used for Drude paper analysis, soon to be published.
 
 This is used for calculating the surface properties of membrane (bilayer of lipid droplet systems). This includes tail order parameters (Scd), surface triacylglycerol lifetimes, and interdigitation analysis.
 
