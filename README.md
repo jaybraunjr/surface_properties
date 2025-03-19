@@ -100,48 +100,99 @@ This will generate a text file **`order_parameters.txt`** containing **\( S_{cd}
 
 ---
 
-## **Interpreting the Results**
-The output contains **two columns**:
+Here’s the **concise, LaTeX-formatted** README section for **Surf-TG Lifetime Analysis**, ready for direct pasting:
 
-- **Column 1**: Carbon index \( C_i \).
-- **Column 2**: Order parameter \( S_{cd} \).
+---
 
-Example:
-```
-1   0.23
-2   0.35
-3   0.52
-...
-```
+# **Surface-Active Molecule Lifetime Analysis**  
 
-### **Visualizing the Order Parameter Profile**
-You can **plot** \( S_{cd} \) profiles using:
+The **lifetime analysis** tracks **surface-active molecules** at the **lipid interface**. While focused on **triolein (Surf-TG)**, this method applies to **any molecule** interacting with **monolayers, bilayers, or membranes**.  
+
+### **Defining Surface Persistence**  
+A molecule is **surface-active** if it remains at the interface for **continuous frames**. The total surface residence time is:
+
+$$
+T_{\text{surf}} = \sum_{i=0}^{N} \delta_i \cdot \Delta t
+$$
+
+where:
+- \( T_{\text{surf}} \) is the **total surface residence time**.
+- \( \delta_i = 1 \) if the molecule is **surface-bound** at frame \( i \), else **0**.
+- \( \Delta t \) is the **frame time step**.
+- \( N \) is the **number of trajectory frames**.
+
+---
+
+## **Methodology**
+1. **Identify surface molecules** based on \( z \)-position and structural constraints.
+2. **Track residence states** across trajectory frames.
+3. **Apply a buffer period** to remove transient fluctuations.
+4. **Store residence times** for each molecule.
+
+---
+
+## **Example Usage**
+To compute **Surf-TG lifetimes**, use:
 
 ```python
+import MDAnalysis as mda
+from lifetime import LifetimeAnalysis
+
+# Load trajectory
+universe = mda.Universe("membrane.gro", "trajectory.xtc")
+
+# Initialize lifetime analysis
+lifetime_analysis = LifetimeAnalysis(
+    universe=universe, lipids=["POPC"], NL="TRIO", water="TIP3",
+    buffer_frames=3, min_oxygens=3, buffer_length=20
+)
+
+# Compute lifetimes
+lifetimes = lifetime_analysis.calculate_trio_lifetimes(start_frame=0, end_frame=500, step_frame=1)
+
+# Save results
+lifetime_analysis.analyze_and_save(base_dir="lifetime_results/")
+```
+
+This generates **`trio_lifetimes.json`**, storing lifetimes per molecule.
+
+---
+
+## **Interpreting the Results**  
+The output contains **surface residence times per molecule**:
+
+```json
+{
+    "101": [10, 12, 18],
+    "205": [5, 7, 25],
+    "312": [30, 40, 42]
+}
+```
+
+where keys represent **molecule IDs** and values are **lifetimes**.
+
+### **Visualizing Surf-TG Lifetimes**  
+```python
+import json
 import matplotlib.pyplot as plt
-import numpy as np
 
-# Load data
-data = np.loadtxt("order_parameters.txt")
-carbon_numbers, scd_values = data[:, 0], data[:, 1]
+with open("lifetime_results/trio_lifetimes.json", "r") as f:
+    lifetime_data = json.load(f)
 
-# Plot
+all_lifetimes = [time for lifetimes in lifetime_data.values() for time in lifetimes]
+
 plt.figure(figsize=(6, 4))
-plt.plot(carbon_numbers, scd_values, marker='o', linestyle='-', label="POPC")
-plt.xlabel("Carbon Index")
-plt.ylabel(r"$S_{cd}$")
-plt.title("Lipid Tail Order Parameter")
-plt.legend()
+plt.hist(all_lifetimes, bins=30, alpha=0.7, color="blue", edgecolor="black")
+plt.xlabel("Surface Lifetime (frames)")
+plt.ylabel("Frequency")
+plt.title("Distribution of Surf-TG Lifetimes")
 plt.grid()
 plt.show()
 ```
 
-### **What to Look For**
-- **High \( S_{cd} \) (~0.8–1.0) at tail ends** → **Tighter packing**.
-- **Lower \( S_{cd} \) at mid-chain** → **More disorder**.
-- **Drop in \( S_{cd} \) near the headgroup** → **Increased mobility**.
-
 ---
 
-Would you like me to add **any specific examples** or **references to lipid order in literature**?
+- **Longer lifetimes** indicate **strong surface retention**.
+- **Force field-dependent trends** can be observed across simulations.
 
+---
