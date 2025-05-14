@@ -1,9 +1,10 @@
 
 import logging
-from . import opc
+# from . import opc
 import MDAnalysis as mda
 import numpy as np
 import matplotlib.pyplot as plt
+from tqdm import tqdm
 
 logger = logging.getLogger(__name__)
 
@@ -24,21 +25,6 @@ class OrderParameters:
         self.get_strong_residues = get_strong_residues
         self.C_numbers, self.Cs, self.Hs_f, self.repeat = self.process_atom_lists()
 
-
-    # def process_atom_lists(self):
-    #     C_numbers = []
-    #     Cs = []
-    #     Hs = []
-    #     repeat = []
-    #     for atoms in self.atomlists:
-    #         C_number = atoms[0][2:]
-    #         C_numbers.append(int(C_number))
-    #         Cs.append(atoms[0])
-    #         Hs.append(atoms[1:])
-    #         repeat.append(len(atoms) - 1)
-    #     Hs_f = [item for sublist in Hs for item in sublist]
-    #     assert int(np.sum(repeat)) == len(Hs_f)
-    #     return C_numbers, Cs, Hs_f, repeat
 
     def process_atom_lists(self):
         C_numbers = []
@@ -61,7 +47,6 @@ class OrderParameters:
         Hs_f = [item for sublist in Hs for item in sublist]
         assert int(np.sum(repeat)) == len(Hs_f), "Mismatch in repeats"
         return C_numbers, Cs, Hs_f, repeat
-
 
 
     def compute_OP(self):
@@ -137,3 +122,85 @@ def run_op(u, opc, lipid_selection, selection=None, start_frame=0, end_frame=Non
     else:
         logger.info("No order parameter results to save.")
     return OP_results
+
+
+def run_vec_leaflet(
+    universe,
+    frame_start,
+    frame_end,
+    frame_step,
+    residue_sel="resname TRIO",
+    tail_names=['C118', 'C218', 'C318'],
+    headgroup_sel="name O*",
+    pl_selection="resname POPC DOPE and name C210",
+    leaflet='bottom',  # 'bottom' = z > midpoint, 'top' = z < midpoint
+    expected_headgroup_count=6
+):
+    angles = []
+    time_series = []
+    avg_order_params = {tail: [] for tail in tail_names}
+    std_order_params = {tail: [] for tail in tail_names}
+
+    total_frames = len(universe.trajectory[frame_start:frame_end:frame_step])
+    for ts in tqdm(universe.trajectory[frame_start:frame_end:frame_step], total=total_frames,
+                   desc=f"Analyzing {universe.trajectory.filename.split('/')[-1]}"):
+
+        pl_atoms = universe.select_atoms(pl_selection)
+        if len(pl_atoms) == 0:
+            continue
+
+        z_coords = pl_atoms.positions[:, 2]
+        midpoint_z = np.mean(z_coords)
+        if leaflet == 'bottom':
+            leaflet_atoms = pl_atoms.select_atoms(f'prop z > {midpoint_z}')
+        elif leaflet == 'top':
+            leaflet_atoms = pl_atoms.select_atoms(f'prop z < {midpoint_z}')
+        else:
+            raise ValueError("leaflet must be 'bottom' or 'top'")
+        if len(leaflet_atoms) == 0:
+            continue
+        avg_leaflet_z = np.mean(leaflet_atoms.positions[:, 2])
+        residues = universe.select_atoms(residue_sel).residues
+        frame_cosine_values = {tail: [] for tail in tail_names}
+
+        for res in residues:
+            headgroup = res.atoms.select_atoms(headgroup_sel)
+            if len(headgroup) != expected_headgroup_count:
+                continue
+            com_head = headgroup.center_of_mass()
+
+            if (leaflet == 'bottom' and com_head[2] <= avg_leaflet_z) or \
+               (leaflet == 'top' and com_head[2] >= avg_leaflet_z):
+                continue
+
+            for tail in tail_names:
+                tail_atom = res.atoms.select_atoms(f'name {tail}')
+                if len(tail_atom) != 1:
+                    continue
+                tail_pos = tail_atom.positions[0]
+                vec = com_head - tail_pos
+                norm = np.linalg.norm(vec)
+                if norm == 0:
+                    continue
+                cos_theta = np.dot(vec, [0, 0, 1]) / norm
+
+                angles.append({
+                    'frame': ts.frame,
+                    'resid': res.resid,
+                    'tail_name': tail,
+                    'cosine_alignment': cos_theta
+                })
+                frame_cosine_values[tail].append(cos_theta)
+
+        for tail in tail_names:
+            values = frame_cosine_values[tail]
+            if values:
+                avg_order_params[tail].append(np.mean(values))
+                std_order_params[tail].append(np.std(values))
+            else:
+                avg_order_params[tail].append(np.nan)
+                std_order_params[tail].append(np.nan)
+
+        time_series.append(ts.frame)
+
+    return angles, time_series, avg_order_params, std_order_params
