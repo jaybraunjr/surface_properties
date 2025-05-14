@@ -24,7 +24,6 @@ class MembraneAnalysisBase(AnalysisBase):
 
 
     def get_tail_atoms(self, tail_atoms=None):
-        """Return a list of tail atom names (default is C2* and C3*)."""
         if tail_atoms is None:
             tail_atoms = [f"C2{i}" for i in range(2, 22)] + [f"C3{i}" for i in range(2, 22)]
         return tail_atoms
@@ -33,12 +32,10 @@ class MembraneAnalysisBase(AnalysisBase):
         return headgroup_atoms if headgroup_atoms else ["P"]
 
     def get_lipid_selection(self, extra_lipids=None):
-        """Return atom selection string for all membrane lipids."""
         selected_lipids = self.lipids + (extra_lipids or [])
         return " or ".join(f"resname {lipid}" for lipid in selected_lipids)
 
     def get_leaflet_selection(self, lipid_sel, headgroup_atoms, tail_atoms, prop, alt=False, side='upper'):
-        """Build a leaflet selection string."""
         z_cmp = ">" if side == 'upper' else "<"
         if alt:
             return f"(same residue as ({lipid_sel}) and name C24 and {prop}{z_cmp}{self.halfz})"
@@ -49,7 +46,6 @@ class MembraneAnalysisBase(AnalysisBase):
 
     def setup_atom_groups(self, extra_lipids=None, tail_atoms=None, headgroup_atoms=None,
                           leaflet_property="prop z", use_ls2=False, use_us2=False):
-        """Main selector for atom groups used in density and overlap calculations."""
         lipid_sel = self.get_lipid_selection(extra_lipids)
         tail_atoms = self.get_tail_atoms(tail_atoms)
         headgroup_atoms = self.get_headgroup_atoms(headgroup_atoms)
@@ -74,7 +70,6 @@ class MembraneAnalysisBase(AnalysisBase):
 
     def calculate_strong_resids(self, trio_pos, utz, ltz, names, resids,
                                 min_oxygens=3, max_oxygens=6, strong_atom_prefix="O"):
-        """Determine 'strong' residues based on oxygen atom counts above/below leaflet centers."""
         if trio_pos.shape[0] != names.shape[0]:
             raise ValueError("Mismatch between trio_pos and names lengths.")
 
@@ -84,13 +79,11 @@ class MembraneAnalysisBase(AnalysisBase):
         return strong_resids[valid], counts[valid]
 
     def density_frame(self, pos, mass, pbc, bins):
-        """Return mass density profile in z."""
         dz = bins[1] - bins[0]
         hist, _ = np.histogram(pos, weights=mass, bins=bins)
         return hist / (pbc[0] * pbc[1] * dz * 0.602214)
 
     def calculate_overlap_and_inter(self, d0, d1, dz, threshold=0.1):
-        """Compute normalized density overlap and scalar interdigitation."""
         d_sum = d0 + d1
         d_mul = d0 * d1
         mask = d_sum < threshold
