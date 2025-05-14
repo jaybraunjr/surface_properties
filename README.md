@@ -1,198 +1,119 @@
-# surface_properties
-Under development, code used for Drude paper analysis, soon to be published.
+# **surface\_properties**
 
-This is used for calculating the surface properties of membrane (bilayer of lipid droplet systems). This includes tail order parameters (Scd), surface triacylglycerol lifetimes, and interdigitation analysis.
+This package calculates **surface properties of membranes**, with a focus on **lipid droplet systems**, **bilayers**, and **monolayers**. It includes modular, extensible classes for analyzing **interdigitation**, **tail ordering**, **cosine alignment**, and **surface molecule lifetimes**. It is designed for use with **MDAnalysis** and supports customization of lipid types, molecular definitions, and spatial criteria.
 
+---
+## **Core Analyses**
 
+### **1. Interdigitation Analysis**
 
-The overlap parameter, $\rho_{ov}(z)$, ranges from **0 to 1**, where:
-- **0** indicates no overlap.
-- **1** represents identical density distributions at a given $z$-position.
+Quantifies the overlap between **neutral lipids** (e.g. TRIO) and **phospholipids** based on **z-direction density profiles**.
 
-It is defined as:
+* Computes **total**, **strong**, and **weak interdigitation** based on glycerol oxygen positioning.
+* Defines overlap parameter $\rho_{ov}(z) \in [0, 1]$, and integrates over $z$ to get interdigitation $\lambda_{ov}$.
+* Supports customizable leaflet definitions, tail atoms, and binning resolution.
+* Modular design using `InterdigitationAnalysis` inheriting from `AnalysisBase`.
 
-$$
-\rho_{ov}(z) = 4 \frac{\rho_{TG}(z) \rho_{PL}(z)}{(\rho_{TG}(z) + \rho_{PL}(z))^2}
-$$
+### **2. Tail Order Parameter $S_{cd}$**
 
-The **total interdigitation** $\lambda_{ov}$ is obtained by integrating the overlap parameter along the $z$-axis:
+Measures **lipid tail ordering** with respect to the membrane normal (z-axis).
 
-$$
-\lambda_{ov} = \int_0^L \rho_{ov}(z) \,dz
-$$
+* Calculates $S_{cd} = \frac{1}{2}(3\langle \cos^2\theta \rangle - 1)$ for each carbon position.
+* Allows selections near/away from protein, or by residue.
+* Easily extended for any hydrocarbon tail type.
 
+### **3. Cosine Alignment Analysis**
 
-The example below is for lipid droplet trilayers. However, this can be done with differing bilayer or membrane systems.
+Tracks the **time-dependent orientation** of tail vectors (e.g. C–H or terminal–mid tail vectors) relative to z-axis.
 
+* Outputs per-frame cosine values and averages.
+* Suitable for autocorrelation and alignment decay analysis.
 
-![image](https://github.com/user-attachments/assets/e0f088e5-439a-4be5-9205-defefaec8541)
+### **4. Surface Molecule Lifetime**
 
+Calculates **surface residence times** of neutral lipids (e.g. surface-active TGs).
 
-We can then determine the diferent types of interdigition. For example, in a LD monolayer, there is generally triolein interacting with the phospholipids. There would be weak interdigitation (tails of the trioleins interdigitating with the PL), and strong interdigitation (3 or more oxygens of triolein glycerol above z-dim midpoint of PL tails). This is fully modifiable by lipid type, tail chain definition, and strong int. definiton in the functions.
-
-![image](https://github.com/user-attachments/assets/d3f3077e-5357-483c-9cd7-ce5b22383db7)
-
-Strong interdigitation has correlation with the area-per-lipid of monolayer systems:
-![image](https://github.com/user-attachments/assets/5162b67b-e262-4baf-8f7f-9cbd95f1b6e4)
-
-
-# **Lipid Tail Order Parameter (\( S_{cd} \)) Analysis**
-The **order parameter** \( S_{cd} \) quantifies the **alignment of lipid tail C-H bonds** relative to the **membrane normal (z-axis)**. It provides insight into:
-
-- **Lipid packing and membrane fluidity**.
-- **Bilayer rigidity** under different conditions**.
-- **Effects of neutral lipids (e.g., TRIO) on lipid ordering**.
+* Tracks per-residue surface binding using z-position and buffer thresholds.
+* Returns lifetimes per molecule and allows histogramming or export to `.json`.
 
 ---
 
-## **Order Parameter Definition**
-The order parameter is defined as:
+## **Modularity & Workflow**
 
-$$
-S_{cd} = \frac{1}{2} \left( 3 \langle \cos^2 \theta \rangle - 1 \right)
-$$
+All analyses inherit from a unified `AnalysisBase` class:
 
-Where:
+* Shared `run()` interface for consistency.
+* Flexible per-frame `_analyze_frame()` logic.
 
-- \( \theta \) is the **angle between the C-H bond vector and the membrane normal (z-axis)**.
-- \( \langle \cdot \rangle \) represents an **ensemble average** over time and molecules.
-
-### **Expected Values**
-- \( S_{cd} \approx 1.0 \) → **Highly ordered lipid tails** (rigid packing).
-- \( S_{cd} \approx 0.0 \) → **Disordered lipid tails** (fluid-like).
-- **Negative values** indicate **tilt away from the normal**.
-
----
-
-## **Methodology**
-This calculation is performed using **MDAnalysis** and follows these steps:
-
-1. **Identify Lipid Tails**: Select **C-H pairs** in lipid acyl chains.
-2. **Compute Bond Orientations**: Measure **angles** between **C-H vectors** and the membrane normal.
-3. **Average Over Time**: Compute **\( S_{cd} \)** values per **carbon index** across all frames.
-4. **Output Results**: Save results in a `.txt` file.
-
----
-
-## **Example Usage**
-### **Running Order Parameter Calculations**
-To compute **\( S_{cd} \)** for **POPC tails**, use:
+You can run all analyses in just a few lines of code:
 
 ```python
-import MDAnalysis as mda
-from order import run_op
+from analysis.order import OrderParameters
 
-# Load trajectory
-universe = mda.Universe("membrane.gro", "trajectory.xtc")
-
-# Run order parameter calculation for POPC tails
-order_results = run_op(
-    u=universe,
-    opc=opc,  
-    lipid_selection="POPC",  # Define lipid of interest
-    selection="resname POPC",
-    start_frame=0,
-    end_frame=500,
-    output_text="order_parameters.txt"
-)
-```
-This will generate a text file **`order_parameters.txt`** containing **\( S_{cd} \) values per carbon index**.
-
----
-
-Here’s the **concise, LaTeX-formatted** README section for **Surf-TG Lifetime Analysis**, ready for direct pasting:
-
----
-
-# **Surface-Active Molecule Lifetime Analysis**  
-
-The **lifetime analysis** tracks **surface-active molecules** at the **lipid interface**. While focused on **triolein (Surf-TG)**, this method applies to **any molecule** interacting with **monolayers, bilayers, or membranes**.  
-
-### **Defining Surface Persistence**  
-A molecule is **surface-active** if it remains at the interface for **continuous frames**. The total surface residence time is:
-
-$$
-T_{\text{surf}} = \sum_{i=0}^{N} \delta_i \cdot \Delta t
-$$
-
-where:
-- \( T_{\text{surf}} \) is the **total surface residence time**.
-- \( \delta_i = 1 \) if the molecule is **surface-bound** at frame \( i \), else **0**.
-- \( \Delta t \) is the **frame time step**.
-- \( N \) is the **number of trajectory frames**.
-
----
-
-## **Methodology**
-1. **Identify surface molecules** based on \( z \)-position and structural constraints.
-2. **Track residence states** across trajectory frames.
-3. **Apply a buffer period** to remove transient fluctuations.
-4. **Store residence times** for each molecule.
-
----
-
-## **Example Usage**
-To compute **Surf-TG lifetimes**, use:
-
-```python
-import MDAnalysis as mda
-from lifetime import LifetimeAnalysis
-
-# Load trajectory
-universe = mda.Universe("membrane.gro", "trajectory.xtc")
-
-# Initialize lifetime analysis
-lifetime_analysis = LifetimeAnalysis(
-    universe=universe, lipids=["POPC"], NL="TRIO", water="TIP3",
-    buffer_frames=3, min_oxygens=3, buffer_length=20
+op = OrderParameters(
+    universe=u,
+    atomlists=opc.POPC1,                        # list of CH bonds
+    selection="resname POPC and prop z > 6.0",  # e.g., top leaflet
+    start=0,
+    stop=100
 )
 
-# Compute lifetimes
-lifetimes = lifetime_analysis.calculate_trio_lifetimes(start_frame=0, end_frame=500, step_frame=1)
+op.run()
+results = op.results['output']  # Columns: [carbon_index, Scd]
 
-# Save results
-lifetime_analysis.analyze_and_save(base_dir="lifetime_results/")
+
+from analysis.Vector import VectorOrientation
+
+vec = VectorOrientation(
+    u,
+    residue_sel="resname TRIO",
+    tail_names=["C118", "C218", "C318"],
+    pl_selection="resname POPC and name C210",
+    leaflet="bottom",
+    start=0,
+    stop=100
+)
+
+vec.run()
+angles, time_series, avg_order, std_order = vec.unpack()
+
+
+
+from analysis.Surface import InterdigitationAnalysis
+
+inter = InterdigitationAnalysis(
+    u,
+    lipids=['POPC'],
+    NL='TRIO',
+    water='TIP3',
+    start=0,
+    stop=100
+)
+
+results = inter.run().results
+
+
+from analysis.lifetime import LifetimeAnalysis
+
+lt = LifetimeAnalysis(
+    universe=u,
+    lipids=["POPC"],
+    NL="TRIO",
+    water="TIP3",
+    buffer_frames=3,
+    min_oxygens=3,
+    buffer_length=20
+)
+
+lifetimes = lt.calculate_trio_lifetimes(start_frame=0, end_frame=100)
+lt.analyze_and_save(base_dir="results/")
+
 ```
-
-This generates **`trio_lifetimes.json`**, storing lifetimes per molecule.
 
 ---
 
-## **Interpreting the Results**  
-The output contains **surface residence times per molecule**:
+## **Customization**
 
-```json
-{
-    "101": [10, 12, 18],
-    "205": [5, 7, 25],
-    "312": [30, 40, 42]
-}
-```
+* Supports **custom tail atom definitions**.
+* Compatible with **trilayers**, **bilayers**, and **monolayer geometries**.
 
-where keys represent **molecule IDs** and values are **lifetimes**.
-
-### **Visualizing Surf-TG Lifetimes**  
-```python
-import json
-import matplotlib.pyplot as plt
-
-with open("lifetime_results/trio_lifetimes.json", "r") as f:
-    lifetime_data = json.load(f)
-
-all_lifetimes = [time for lifetimes in lifetime_data.values() for time in lifetimes]
-
-plt.figure(figsize=(6, 4))
-plt.hist(all_lifetimes, bins=30, alpha=0.7, color="blue", edgecolor="black")
-plt.xlabel("Surface Lifetime (frames)")
-plt.ylabel("Frequency")
-plt.title("Distribution of Surf-TG Lifetimes")
-plt.grid()
-plt.show()
-```
-
----
-
-- **Longer lifetimes** indicate **strong surface retention**.
-- **Force field-dependent trends** can be observed across simulations.
-
----
