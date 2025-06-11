@@ -1,10 +1,14 @@
 from .base import AnalysisBase  # your custom base
 import numpy as np
 import logging
+from unittest.mock import MagicMock
 
 class OrderParameters(AnalysisBase):
-    def __init__(self, u, atomlists, selection=None, get_strong_residues=None, **kwargs):
-        super().__init__(u, **kwargs)
+    def __init__(self, u, atomlists, selection=None, get_strong_residues=None,
+                 start_frame=0, end_frame=None, **kwargs):
+        if selection is None and get_strong_residues is None:
+            raise ValueError("Either a selection string or a dynamic residue selection callable must be provided.")
+        super().__init__(u, start=start_frame, stop=end_frame, **kwargs)
         self.atomlists = atomlists
         self.selection = selection
         self.get_strong_residues = get_strong_residues
@@ -82,4 +86,12 @@ class OrderParameters(AnalysisBase):
             out.append(np.mean(x[i:i+rep]))
             i += rep
         return np.array(out)
+
+    def compute_OP(self):
+        self._prepare()
+        end = self.stop or len(self.u.trajectory)
+        for frame in range(self.start, end, self.step):
+            self._analyze_frame(MagicMock(frame=frame))
+        self._finalize()
+        return np.array(self.results.get('order_parameters'))
 

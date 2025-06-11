@@ -73,10 +73,21 @@ class MembraneAnalysisBase(AnalysisBase):
         if trio_pos.shape[0] != names.shape[0]:
             raise ValueError("Mismatch between trio_pos and names lengths.")
 
-        strong_mask = ((trio_pos[:, 2] > utz) | (trio_pos[:, 2] < ltz)) & np.char.startswith(names, strong_atom_prefix)
-        strong_resids, counts = np.unique(resids[strong_mask], return_counts=True)
-        valid = (counts >= min_oxygens) & (counts <= max_oxygens)
-        return strong_resids[valid], counts[valid]
+        strong_mask = []
+        for pos, name in zip(trio_pos, names):
+            flag = (pos[2] > utz or pos[2] < ltz) and name.startswith(strong_atom_prefix)
+            strong_mask.append(flag)
+        selected = [r for r, m in zip(resids, strong_mask) if m]
+        count_map = {}
+        for r in selected:
+            count_map[r] = count_map.get(r, 0) + 1
+        strong_resids = []
+        counts = []
+        for resid, count in count_map.items():
+            if min_oxygens <= count <= max_oxygens:
+                strong_resids.append(resid)
+                counts.append(count)
+        return np.array(strong_resids), np.array(counts)
 
     def density_frame(self, pos, mass, pbc, bins):
         dz = bins[1] - bins[0]
