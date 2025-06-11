@@ -138,3 +138,16 @@ class InterdigitationAnalysis(AnalysisBase):
 
         with open(f"{self.strong_resid_list_name}.txt", "w") as f:
             f.write('\n'.join(map(str, self.results['strong_residues'])))
+
+class LifetimeAnalysis(MembraneAnalysisBase):
+    def __init__(self, universe, lipids, NL, water, **kwargs):
+        super().__init__(universe, lipids, NL, water, **kwargs)
+
+    def calculate_trio_lifetimes(self, start_frame=0, end_frame=None):
+        return {}
+
+    def analyze_and_save(self, base_dir, start_frame=0, end_frame=None):
+        lifetimes = self.calculate_trio_lifetimes(start_frame, end_frame)
+        with open(os.path.join(base_dir, 'lifetimes.txt'), 'w') as f:
+            json.dump(lifetimes, f)
+        return lifetimes
