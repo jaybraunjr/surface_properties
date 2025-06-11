@@ -1,5 +1,6 @@
 import math
 import random as _random
+import builtins
 
 nan = float('nan')
 
@@ -17,6 +18,12 @@ class ndarray:
         return d
     def __len__(self):
         return len(self.data)
+
+    @property
+    def size(self):
+        if isinstance(self.data, list):
+            return len(list(_flatten(self.data)))
+        return 1
     def __iter__(self):
         for x in self.data:
             yield x
@@ -42,6 +49,10 @@ class ndarray:
                 if len(col_idx) == 1:
                     return ndarray([self.data[r][col_idx[0]] for r in row_idx])
                 return ndarray([[self.data[r][c] for c in col_idx] for r in row_idx])
+        if isinstance(key, list):
+            return ndarray([self.data[i] for i in key])
+        if isinstance(key, ndarray):
+            return self.__getitem__(key.data)
         result = self.data[key]
         if isinstance(result, list):
             return ndarray(result)
@@ -50,7 +61,11 @@ class ndarray:
         if isinstance(other, ndarray):
             other = other.data
         if isinstance(self.data, list):
-            return ndarray([op(a, b) for a, b in zip(self.data, other)])
+            if isinstance(other, (list, tuple)):
+                other_iter = other
+            else:
+                other_iter = [other] * len(self.data)
+            return ndarray([op(a, b) for a, b in zip(self.data, other_iter)])
         return op(self.data, other)
     def __sub__(self, other):
         return self._binary_op(other, lambda a,b: a-b)
@@ -207,6 +222,11 @@ def histogram(pos, weights=None, bins=None):
                 hist[j] += w
                 break
     return ndarray(hist), ndarray(bins)
+
+def sum(arr):
+    if isinstance(arr, ndarray):
+        arr = arr.data
+    return builtins.sum(float(x) for x in arr)
 
 class _Char:
     def startswith(self, arr, prefix):

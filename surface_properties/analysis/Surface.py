@@ -139,6 +139,21 @@ class InterdigitationAnalysis(AnalysisBase):
         with open(f"{self.strong_resid_list_name}.txt", "w") as f:
             f.write('\n'.join(map(str, self.results['strong_residues'])))
 
+    def interdigit(self, b=0, e=None, nbins=None):
+        """Convenience wrapper used in tests to run the analysis."""
+        if nbins is not None:
+            self.nbins = nbins
+        self.start = b
+        self.stop = e
+        return self.run().results
+
+    def save_results(self, results, base_dir):
+        os.makedirs(base_dir, exist_ok=True)
+        for cat, data_dict in results.items():
+            for name, arr in data_dict.items():
+                filename = os.path.join(base_dir, f"{cat}_{name}.txt")
+                np.savetxt(filename, arr)
+
 class LifetimeAnalysis(MembraneAnalysisBase):
     def __init__(self, universe, lipids, NL, water, **kwargs):
         super().__init__(universe, lipids, NL, water, **kwargs)

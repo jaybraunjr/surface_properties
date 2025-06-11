@@ -98,8 +98,14 @@ class MembraneAnalysisBase(AnalysisBase):
         d_sum = d0 + d1
         d_mul = d0 * d1
         mask = d_sum < threshold
-        d_sum[mask] = 1
-        d_mul[mask] = 0
-        overlap = 4 * d_mul / d_sum**2
+
+        processed = []
+        for s, m, mul in zip(d_sum, mask, d_mul):
+            if m:
+                s = 1
+                mul = 0
+            processed.append(4 * mul / (s ** 2))
+
+        overlap = np.array(processed)
         interdig = np.sum(overlap) * dz / 10  # scale to nm
         return overlap, interdig
