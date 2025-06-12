@@ -1,10 +1,29 @@
-from .base import AnalysisBase  # your custom base
+from .Base import AnalysisBase  # your custom base
 import numpy as np
 import logging
 
 class OrderParameters(AnalysisBase):
-    def __init__(self, u, atomlists, selection=None, get_strong_residues=None, **kwargs):
-        super().__init__(u, **kwargs)
+    def __init__(
+        self,
+        u,
+        atomlists,
+        selection=None,
+        get_strong_residues=None,
+        start_frame=0,
+        end_frame=None,
+        step_frame=1,
+        **kwargs,
+    ):
+        if selection is None and get_strong_residues is None:
+            raise ValueError(
+                "Either a selection string or a dynamic residue selection callable must be provided."
+            )
+
+        if end_frame is not None and end_frame <= start_frame:
+            raise ValueError("end_frame must be greater than start_frame")
+
+        super().__init__(u, start=start_frame, stop=end_frame, step=step_frame, **kwargs)
+
         self.atomlists = atomlists
         self.selection = selection
         self.get_strong_residues = get_strong_residues
@@ -38,7 +57,6 @@ class OrderParameters(AnalysisBase):
     def _analyze_frame(self, ts):
         atoms = self._select_atoms(ts)
         if atoms is None or len(atoms) == 0:
-            self.results['order_parameters'].append(np.zeros(len(self.Cs)))
             return
 
         valid_C, valid_H = [], []
@@ -50,7 +68,6 @@ class OrderParameters(AnalysisBase):
                 valid_H.extend(Hs.indices)
 
         if not valid_C or not valid_H:
-            self.results['order_parameters'].append(np.zeros(len(self.Cs)))
             return
 
         group1 = self.u.atoms[valid_C]
@@ -73,8 +90,11 @@ class OrderParameters(AnalysisBase):
 
     def _finalize(self):
         arr = np.array(self.results['order_parameters'])
-        self.results['average'] = np.mean(arr, axis=0)
-        self.results['output'] = np.transpose([self.C_numbers, self.results['average']])
+        if arr.size == 0:
+            self.results['average'] = np.array([])
+        else:
+            self.results['average'] = np.mean(arr, axis=0)
+        self.results['output'] = np.transpose([self.C_numbers, self.results['average']]) if self.results['average'].size else np.array([])
 
     def _average_over_hydrogens(self, x, reps):
         out, i = [], 0
@@ -82,4 +102,9 @@ class OrderParameters(AnalysisBase):
             out.append(np.mean(x[i:i+rep]))
             i += rep
         return np.array(out)
+
+    def compute_OP(self):
+        """Convenience method to run the analysis and return the average order parameters."""
+        self.run()
+        return self.results.get('average', np.array([]))
 
