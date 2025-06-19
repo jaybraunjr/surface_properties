@@ -4,11 +4,9 @@ from .Base import AnalysisBase
 from tqdm import tqdm  
 from collections import defaultdict
 import numpy as np
-import os
 
-import matplotlib.pyplot as plt
-import MDAnalysis as mda
 
+# A helper class for membrane analyses.
 
 
 logger = logging.getLogger(__name__)
@@ -22,6 +20,14 @@ class MembraneAnalysisBase(AnalysisBase):
         self.water = water
         self.halfz = self.u.dimensions[2] / 2
 
+    def select_near_protein(self, lipid, distance, leaflet='upper', inner_distance=None):
+        halfz = self.u.dimensions[2]/2
+        z_filter = f"prop z > {halfz}" if leaflet == 'upper' else f"prop z < {halfz}"
+        near = f"resname {lipid} and (around {distance} protein) and {z_filter}"
+        if inner_distance is not None:
+            near = f"{near} and not (around {inner_distance} protein)"
+        return near
+    
 
     def get_tail_atoms(self, tail_atoms=None):
         """Return a list of tail atom names (default is C2* and C3*)."""

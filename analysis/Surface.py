@@ -7,6 +7,12 @@ import MDAnalysis
 from .Base import AnalysisBase
 from .MembraneBase import MembraneAnalysisBase
 
+
+
+# Interdigitation analysis class. Inherits from AnalysisBase in Base.py.
+# This impliments the membrane logic.
+
+
 class InterdigitationAnalysis(AnalysisBase):
     def __init__(self, universe, lipids, NL, water,
                  start=0, stop=None, step=1,

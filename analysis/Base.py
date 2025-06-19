@@ -1,5 +1,8 @@
 from tqdm import tqdm
 
+# Base class for analyses. Defines how to run the analysis over frames. Doesn't
+# know about membranes.
+
 class AnalysisBase:
     def __init__(self, universe, start=0, stop=None, step=1, verbose=True):
         self.u = universe

@@ -1,4 +1,4 @@
-from .base import AnalysisBase
+from .Base import AnalysisBase
 import numpy as np
 
 class VectorOrientation(AnalysisBase):

@@ -1,6 +1,5 @@
-from .base import AnalysisBase  # your custom base
+from .Base import AnalysisBase  # your custom base
 import numpy as np
-import logging
 
 class OrderParameters(AnalysisBase):
     def __init__(self, u, atomlists, selection=None, get_strong_residues=None, **kwargs):
@@ -15,7 +14,7 @@ class OrderParameters(AnalysisBase):
         for atoms in self.atomlists:
             # C_number = ''.join(filter(str.isdigit, atoms[0]))
             # C_numbers.append(int(C_number))
-            C_numbers.append(len(C_numbers) + 1)  # sequential: 1, 2, 3, ...
+            C_numbers.append(len(C_numbers) + 1)  # sequential: 1, 2, 3, 
             Cs.append(atoms[0])
             Hs.extend(atoms[1:])
             repeat.append(len(atoms) - 1)
