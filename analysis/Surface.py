@@ -1,9 +1,4 @@
-from collections import defaultdict
 import numpy as np
-import os
-import json
-from tqdm import tqdm
-import MDAnalysis
 from .Base import AnalysisBase
 from .MembraneBase import MembraneAnalysisBase
 
