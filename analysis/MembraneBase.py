@@ -1,9 +1,6 @@
-import numpy as np
 import logging
-from .Base import AnalysisBase
-from tqdm import tqdm  
-from collections import defaultdict
 import numpy as np
+from .Base import AnalysisBase
 
 
 # A helper class for membrane analyses.
