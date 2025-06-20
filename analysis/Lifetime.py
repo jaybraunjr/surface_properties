@@ -51,6 +51,7 @@ class LifetimeAnalysis(MembraneAnalysisBase):
             starts = np.where(np.diff(np.pad(arr, (1, 0))) == 1)[0]
             ends = np.where(np.diff(np.pad(arr, (0, 1))) == -1)[0]
             for s, e in zip(starts, ends):
-                if e - s > 1:
-                    lifetimes[resid].append(e - s)
+                length = e - s + 1
+                if length > 1:
+                    lifetimes[resid].append(length)
         self.results = dict(lifetimes)
