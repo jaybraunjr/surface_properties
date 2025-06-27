@@ -36,7 +36,6 @@ Strong interdigitation has correlation with the area-per-lipid of monolayer syst
 ![image](https://github.com/user-attachments/assets/5162b67b-e262-4baf-8f7f-9cbd95f1b6e4)
 
 
-# **Lipid Tail Order Parameter (\( S_{cd} \)) Analysis**
 The **order parameter** \( S_{cd} \) quantifies the **alignment of lipid tail C-H bonds** relative to the **membrane normal (z-axis)**. It provides insight into:
 
 - **Lipid packing and membrane fluidity**.
