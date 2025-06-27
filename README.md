@@ -80,23 +80,25 @@ To compute **\( S_{cd} \)** for **POPC tails**, use:
 
 ```python
 import MDAnalysis as mda
-from order import run_op
+import numpy as np
+from analysis.order import OrderParameters
+from analysis import opc
 
 # Load trajectory
-universe = mda.Universe("membrane.gro", "trajectory.xtc")
+u = mda.Universe("membrane.gro", "trajectory.xtc")
 
-# Run order parameter calculation for POPC tails
-order_results = run_op(
-    u=universe,
-    opc=opc,  
-    lipid_selection="POPC",  # Define lipid of interest
+# Set up and run the analysis
+op = OrderParameters(
+    u,
+    atomlists=opc.POPC1,
     selection="resname POPC",
-    start_frame=0,
-    end_frame=500,
-    output_text="order_parameters.txt"
+    start=0,
+    stop=500
 )
+op.run()
+np.savetxt("order_parameters.txt", op.results["output"], fmt="%d %.6f")
 ```
-This will generate a text file **`order_parameters.txt`** containing **\( S_{cd} \) values per carbon index**.
+This generates **`order_parameters.txt`** with **\( S_{cd} \)** values per carbon index.
 
 ---
 
@@ -136,25 +138,30 @@ To compute **Surf-TG lifetimes**, use:
 
 ```python
 import MDAnalysis as mda
-from lifetime import LifetimeAnalysis
+from analysis.Lifetime import LifetimeAnalysis
+from analysis.utils import save_lifetimes_to_json
 
 # Load trajectory
 universe = mda.Universe("membrane.gro", "trajectory.xtc")
 
 # Initialize lifetime analysis
 lifetime_analysis = LifetimeAnalysis(
-    universe=universe, lipids=["POPC"], NL="TRIO", water="TIP3",
-    buffer_frames=3, min_oxygens=3, buffer_length=20
+    universe,
+    lipids=["POPC"],
+    NL="TRIO",
+    water="TIP3",
+    buffer_length=20,
+    min_oxygens=3
 )
 
-# Compute lifetimes
-lifetimes = lifetime_analysis.calculate_trio_lifetimes(start_frame=0, end_frame=500, step_frame=1)
+# Run the analysis over frames 0–500
+lifetime_analysis.run()
 
-# Save results
-lifetime_analysis.analyze_and_save(base_dir="lifetime_results/")
+# Save results to JSON
+save_lifetimes_to_json(lifetime_analysis.results, "lifetime_results")
 ```
 
-This generates **`trio_lifetimes.json`**, storing lifetimes per molecule.
+This creates **`lifetime_results/trio_lifetimes.json`**, storing lifetimes per molecule.
 
 ---
 
