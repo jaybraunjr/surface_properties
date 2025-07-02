@@ -114,7 +114,7 @@ The **lifetime analysis** tracks **surface-active molecules** at the **lipid int
 A molecule is **surface-active** if it remains at the interface for **continuous frames**. The total surface residence time is:
 
 $$
-T_{\text{surf}} = \sum_{i=0}^{N} \delta_i \cdot \Delta t
+T_{\text{surf}} = \sum_{i=0}^{N-1} \delta_i \Delta t
 $$
 
 where:
@@ -203,3 +203,18 @@ plt.show()
 - **Force field-dependent trends** can be observed across simulations.
 
 ---
+
+## Examples
+
+The repository includes example scripts demonstrating the analysis classes.
+Run them from the repository root with Python:
+
+```bash
+python examples/order_example.py
+python examples/lifetime_example.py
+python examples/interdigitation_example.py
+python examples/vector_orientation_example.py
+```
+
+Each script loads the data in `data/` and prints or saves results in the
+`examples/` folder.
