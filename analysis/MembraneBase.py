@@ -1,7 +1,7 @@
 import logging
 import numpy as np
 from .Base import AnalysisBase
-
+import os
 
 # A helper class for membrane analyses.
 
@@ -40,15 +40,39 @@ class MembraneAnalysisBase(AnalysisBase):
         selected_lipids = self.lipids + (extra_lipids or [])
         return " or ".join(f"resname {lipid}" for lipid in selected_lipids)
 
-    def get_leaflet_selection(self, lipid_sel, headgroup_atoms, tail_atoms, prop, alt=False, side='upper'):
-        """Build a leaflet selection string."""
+    # def get_leaflet_selection(self, lipid_sel, headgroup_atoms, tail_atoms, prop, alt=False, side='upper'):
+    #     """Build a leaflet selection string."""
+    #     z_cmp = ">" if side == 'upper' else "<"
+    #     if alt:
+    #         return f"(same residue as ({lipid_sel}) and name C24 and {prop}{z_cmp}{self.halfz})"
+    #     else:
+    #         heads = " ".join(headgroup_atoms)
+    #         tails = " ".join(tail_atoms)
+    #         return f"(same residue as ({lipid_sel}) and name {heads} and {prop}{z_cmp}{self.halfz}) and name {tails}"
+        
+    def get_leaflet_selection(
+        self,
+        lipid_sel,
+        headgroup_atoms,
+        tail_atoms,
+        prop,
+        alt=False,
+        side='upper',
+        alt_marker_atom=None
+    ):
+
         z_cmp = ">" if side == 'upper' else "<"
         if alt:
-            return f"(same residue as ({lipid_sel}) and name C24 and {prop}{z_cmp}{self.halfz})"
+            marker = alt_marker_atom if alt_marker_atom else "C24"
+            return f"(same residue as ({lipid_sel}) and name {marker} and {prop}{z_cmp}{self.halfz})"
         else:
             heads = " ".join(headgroup_atoms)
             tails = " ".join(tail_atoms)
-            return f"(same residue as ({lipid_sel}) and name {heads} and {prop}{z_cmp}{self.halfz}) and name {tails}"
+            return (
+                f"(same residue as ({lipid_sel}) and name {heads} and {prop}{z_cmp}{self.halfz}) "
+                f"and name {tails}"
+            )
+
 
     def setup_atom_groups(self, extra_lipids=None, tail_atoms=None, headgroup_atoms=None,
                           leaflet_property="prop z", use_ls2=False, use_us2=False):
@@ -64,7 +88,7 @@ class MembraneAnalysisBase(AnalysisBase):
             "memb": self.u.select_atoms(lipid_sel),
             "umemb": self.u.select_atoms(upper_sel),
             "lmemb": self.u.select_atoms(lower_sel),
-            "trio": self.u.select_atoms(f"resname {self.NL}"),
+            self.NL.lower(): self.u.select_atoms(f"resname {self.NL}"),
             "water": self.u.select_atoms(f"resname {self.water}")
         }
 
@@ -102,3 +126,4 @@ class MembraneAnalysisBase(AnalysisBase):
         overlap = 4 * d_mul / d_sum**2
         interdig = np.sum(overlap) * dz / 10  # scale to nm
         return overlap, interdig
+
