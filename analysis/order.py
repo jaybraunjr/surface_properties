@@ -1,7 +1,21 @@
+r"""Order parameter calculations for lipid tails.
+
+This module defines :class:`OrderParameters` which implements S\_CD style order
+parameter calculations for a set of carbon-hydrogen vectors.  Atom name lists
+for common lipids are provided in :mod:`analysis.opc`.
+"""
+
 from .Base import AnalysisBase  # your custom base
 import numpy as np
 
 class OrderParameters(AnalysisBase):
+    """Calculate lipid tail order parameters.
+
+    The class computes segmental order parameters (:math:`S_{CD}`) for each
+    carbon in a supplied list.  Atoms are selected either via an explicit
+    selection string or dynamically using a callable returning strong residues.
+    Results are accumulated per frame and averaged in :meth:`_finalize`.
+    """
     def __init__(self, u, atomlists, selection=None, get_strong_residues=None, **kwargs):
         super().__init__(u, **kwargs)
         self.atomlists = atomlists
@@ -21,9 +35,12 @@ class OrderParameters(AnalysisBase):
         return C_numbers, Cs, Hs, repeat
 
     def _prepare(self):
+        """Allocate storage for per-frame order parameters."""
+
         self.results['order_parameters'] = []
 
     def _select_atoms(self, ts):
+        """Return an :class:`AtomGroup` to analyse for the given frame."""
         if self.get_strong_residues:
             strong_residues = self.get_strong_residues(ts)
             if not strong_residues:
@@ -35,6 +52,7 @@ class OrderParameters(AnalysisBase):
         return None
 
     def _analyze_frame(self, ts):
+        """Compute order parameters for the selected atoms."""
         atoms = self._select_atoms(ts)
         if atoms is None or len(atoms) == 0:
             self.results['order_parameters'].append(np.zeros(len(self.Cs)))
@@ -71,11 +89,13 @@ class OrderParameters(AnalysisBase):
         self.results['order_parameters'].append(np.mean(new_S, axis=0))
 
     def _finalize(self):
+        """Average order parameters over all frames."""
         arr = np.array(self.results['order_parameters'])
         self.results['average'] = np.mean(arr, axis=0)
         self.results['output'] = np.transpose([self.C_numbers, self.results['average']])
 
     def _average_over_hydrogens(self, x, reps):
+        """Average repeated hydrogen values for a single carbon."""
         out, i = [], 0
         for rep in reps:
             out.append(np.mean(x[i:i+rep]))
