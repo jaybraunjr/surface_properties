@@ -1,4 +1,11 @@
-POPC1 = [['C32', 'H2X', 'H2Y'], 
+"""Atom name mappings for order parameter calculations.
+
+This module enumerates carbon--hydrogen atom triplets used when calculating
+segmental order parameters for different lipid species.  The lists can be
+passed directly to :class:`analysis.order.OrderParameters`.
+"""
+
+POPC1 = [['C32', 'H2X', 'H2Y'],
          ['C33', 'H3X', 'H3Y'], 
          ['C34', 'H4X', 'H4Y'], 
          ['C35', 'H5X', 'H5Y'], 

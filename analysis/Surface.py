@@ -1,21 +1,27 @@
+"""Interdigitation and density overlap analysis tools.
+
+This module implements :class:`InterdigitationAnalysis`, a high level
+analysis used to quantify the degree of mixing between membrane lipids and
+neutral lipids.  The class records frame resolved measurements of density
+overlap, interdigitation and lists of so called "strong" residues which have
+multiple headgroup contacts with the aqueous phase.
+"""
+
 import numpy as np
 from .Base import AnalysisBase
 from .MembraneBase import MembraneAnalysisBase
 import os
 
 
-# Interdigitation analysis class. Inherits from AnalysisBase in Base.py.
-# This impliments the membrane logic.
-
-
 class InterdigitationAnalysis(AnalysisBase):
-    
-    """
-    Analysis class for computing interdigitation and density overlap
-    between membrane lipids and neutral lipids (NL) such as TRIO.
-    
-    Runs per-frame analysis and aggregates results, supporting output
-    of strong residue lists and summary statistics.
+
+    """Analyse interdigitation between membrane and neutral lipids.
+
+    The analysis computes density profiles for phospholipid tails and neutral
+    lipids on a per-frame basis.  From these profiles it derives the scalar
+    interdigitation value and the normalised density overlap.  In addition it
+    records residues that present a specified number of oxygen atoms above the
+    bilayer surface ("strong" residues).
     """
     def __init__(self, universe, lipids, NL, water,
                  start=0, stop=None, step=1,
@@ -75,6 +81,8 @@ class InterdigitationAnalysis(AnalysisBase):
         self.frame_data = []
 
     def _prepare(self):
+        """Initialise selections and histogram bins."""
+
         self.tail_atoms = self.base.get_tail_atoms(self.tail_atoms)
         self.groups = self.base.setup_atom_groups(
             extra_lipids=self.extra_lipids,
@@ -90,6 +98,7 @@ class InterdigitationAnalysis(AnalysisBase):
         self.dz = self.bins[1] - self.bins[0]
 
     def _analyze_frame(self, ts):
+        """Analyse a single trajectory frame."""
         utz = np.mean(self.groups['umemb'].positions[:, 2])
         ltz = np.mean(self.groups['lmemb'].positions[:, 2])
 
@@ -149,6 +158,7 @@ class InterdigitationAnalysis(AnalysisBase):
         })
 
     def _finalize(self):
+        """Compute averages and aggregate frame level data."""
         times = np.array([d['time'] for d in self.frame_data])
         zs = np.array([d['z'] for d in self.frame_data])
         XX = np.linspace(0, np.mean(zs), self.nbins)
@@ -187,6 +197,7 @@ class InterdigitationAnalysis(AnalysisBase):
 
 
     def save_results(self, out_dir='results', prefix=None):
+        """Save strong residue lists to ``out_dir``."""
 
         os.makedirs(out_dir, exist_ok=True)
         base_name = prefix or self.strong_resid_list_name
