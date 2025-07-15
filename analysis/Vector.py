@@ -1,7 +1,35 @@
+"""Orientation of lipid tails relative to the membrane.
+
+The :class:`VectorOrientation` class measures the alignment of specified tail
+atoms with respect to the membrane normal.  For each frame the cosine of the
+angle between the tail vector and the membrane normal is recorded along with
+per-residue order parameters.
+"""
+
 from .Base import AnalysisBase
 import numpy as np
 
 class VectorOrientation(AnalysisBase):
+    """Compute orientation of lipid tails with respect to the membrane normal.
+
+    Parameters
+    ----------
+    universe : MDAnalysis.Universe
+        Trajectory to analyse.
+    residue_sel : str, optional
+        Selection string for the residues of interest.
+    tail_names : list[str], optional
+        Names of tail atoms forming the vector pointing towards the headgroup.
+    headgroup_sel : str, optional
+        Selection used to locate the headgroup atoms.
+    pl_selection : str, optional
+        Selection of phospholipid atoms used to determine leaflet separation.
+    leaflet : {'bottom', 'top'}, optional
+        Which leaflet defines the interior of the membrane for headgroup
+        filtering.
+    expected_headgroup_count : int, optional
+        Number of atoms expected for a complete headgroup selection.
+    """
     def __init__(
         self,
         universe,
@@ -23,12 +51,16 @@ class VectorOrientation(AnalysisBase):
         self.expected_headgroup_count = expected_headgroup_count
 
     def _prepare(self):
+        """Initialise result containers before analysis begins."""
+
         self.results['angles'] = []
         self.results['time_series'] = []
         self.results['avg_order'] = {tail: [] for tail in self.tail_names}
         self.results['std_order'] = {tail: [] for tail in self.tail_names}
 
     def _get_leaflet_z_cutoff(self):
+        """Return the average z position defining the chosen leaflet."""
+
         pl_atoms = self.u.select_atoms(self.pl_selection)
         if len(pl_atoms) == 0:
             return None
@@ -45,6 +77,7 @@ class VectorOrientation(AnalysisBase):
         return np.mean(leaflet_atoms.positions[:, 2])
 
     def _analyze_frame(self, ts):
+        """Compute orientation metrics for one frame."""
         avg_leaflet_z = self._get_leaflet_z_cutoff()
         if avg_leaflet_z is None:
             return
@@ -89,6 +122,8 @@ class VectorOrientation(AnalysisBase):
 
 
     def unpack(self):
+        """Return collected results as a tuple."""
+
         return (
             self.results.get('angles'),
             self.results.get('time_series'),
