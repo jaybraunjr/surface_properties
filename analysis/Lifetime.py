@@ -1,8 +1,23 @@
+"""Analysis of residence lifetimes for surface-active molecules.
+
+This module contains :class:`LifetimeAnalysis` which records how long
+neutral lipid residues remain surface active.  A residue is considered
+surface active if a configurable number of headgroup oxygen atoms lie
+outside of the bilayer core for consecutive frames.
+"""
+
 from collections import defaultdict
 import numpy as np
 from .MembraneBase import MembraneAnalysisBase
 
 class LifetimeAnalysis(MembraneAnalysisBase):
+    """Track how long neutral lipid residues remain surface active.
+
+    The analysis maintains a boolean state for each residue indicating whether
+    it is currently considered surface active.  A buffer is applied so that a
+    residue remains active for ``buffer_length`` frames after it stops fulfilling
+    the oxygen count criterion, mimicking experimental uncertainty.
+    """
     def __init__(self, universe, lipids, NL, water,
                  buffer_length=20, min_oxygens=3, max_oxygens=6,
                  strong_atom_prefix="O", **kwargs):
@@ -13,12 +28,15 @@ class LifetimeAnalysis(MembraneAnalysisBase):
         self.strong_atom_prefix = strong_atom_prefix
 
     def _prepare(self):
+        """Initialise residue state tracking structures."""
+
         self.groups = self.setup_atom_groups()
         self.trio_residues = self.groups['trio'].residues
         self.state = {int(res.resid): [] for res in self.trio_residues}
         self.buffer = {int(res.resid): 0 for res in self.trio_residues}
 
     def _analyze_frame(self, ts):
+        """Update per-residue state for one frame."""
         utz = np.mean(self.groups['umemb'].positions[:, 2])
         ltz = np.mean(self.groups['lmemb'].positions[:, 2])
         trio_pos = self.groups['trio'].positions
@@ -45,6 +63,7 @@ class LifetimeAnalysis(MembraneAnalysisBase):
                 self.state[resid].append(0)
 
     def _finalize(self):
+        """Summarise lifetimes for each residue."""
         lifetimes = defaultdict(list)
         for resid, series in self.state.items():
             arr = np.array(series)
