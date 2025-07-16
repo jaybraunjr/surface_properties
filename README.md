@@ -45,7 +45,7 @@ We can then determine the diferent types of interdigition. For example, in a LD 
 <table>
 <tr>
 <td>
-  <img src="https://github.com/user-attachments/assets/5162b67b-e262-4baf-8f7f-9cbd95f1b6e4" width="180"/>
+  <img src="https://github.com/user-attachments/assets/5162b67b-e262-4baf-8f7f-9cbd95f1b6e4" width="400"/>
 </td>
 <td>
   <b>Strong interdigitation</b> has implications to biological systems. For example, it correlates with the area-per-lipid of membranes, leading to larger membrane defects.
@@ -115,6 +115,17 @@ This calculation is performed using **MDAnalysis** and follows these steps:
 2. **Compute Bond Orientations**: Measure **angles** between **C–H vectors** and the membrane normal.
 3. **Average Over Time**: Compute **S<sub>cd</sub>** values per **carbon index** across all frames.
 4. **Output Results**: Save results in a `.txt` file.
+
+<table>
+<tr>
+<td>
+  <img src="images/Screenshot%20(1829).png" width="400"/>
+</td>
+<td>
+  <b>Tail order parameter</b> of different forcefields and system paramters provides insight to physical properties of the biological membrane.
+</td>
+</tr>
+</table>
 
 ---
 
