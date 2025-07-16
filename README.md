@@ -21,12 +21,23 @@ $$
 \lambda_{ov} = \int_0^L \rho_{ov}(z) \,dz
 $$
 
+## **Methodology**
+
+The interdigitation analysis quantifies how lipid tails and surface molecules (e.g., triolein) interpenetrate along the membrane normal (z-axis). It follows these steps:
+
+1. **Define Groups**  
+   Select **phospholipid tails** and **neutral lipid atoms** (e.g., TRIO). Optionally, define *strong interdigitation* criteria, such as a minimum number of oxygen atoms above the PL tail midplane.
+2. **Compute Density Profiles**  
+   Calculate normalized **z-density distributions** for both **PL** and **TG** groups.
+3. **Calculate Overlap Parameter**  
+   At each z-position, compute the **overlap** ρ<sub>ov</sub>(z)
+4. **Integrate to Get Total Interdigitation**  
+Integrate ρ<sub>ov</sub>(z) across the z-dimension to yield:
+
 
 The example below is for lipid droplet (LD) trilayers. However, this can be done with differing bilayer or membrane systems.
 
-
 ![image](https://github.com/user-attachments/assets/e0f088e5-439a-4be5-9205-defefaec8541)
-
 
 We can then determine the diferent types of interdigition. For example, in a LD monolayer, there is generally triolein interacting with the phospholipids. There would be weak interdigitation (tails of the trioleins interdigitating with the PL), and strong interdigitation (3 or more oxygens of triolein glycerol above z-dim midpoint of PL tails). This is fully modifiable by lipid type, tail chain definition, and strong int. definiton in the functions.
 
@@ -71,7 +82,6 @@ print("Total interdigitation:", analysis.results["inter"]["total"][:5])
 print("Overlap profile sample:", analysis.results["ov"]["total"][:5])
 print("Strong/weak counts:", analysis.results["ratio"][f"{analysis.base.NL.lower()}-to-pl"][:5])
 ```
-
 
 
 # Lipid Tail Order Parameter ($S_{cd}$) Analysis
