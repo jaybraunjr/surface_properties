@@ -1,8 +1,9 @@
 # surface_properties
-Under development, code used for Drude polarizable triacylglycerol paper analysis, soon to be published.
 
-This is used for calculating the surface properties of membrane (bilayer of lipid droplet systems). This includes tail order parameters (Scd), surface triacylglycerol lifetimes, and interdigitation analysis.
 
+This is used for calculating the surface properties of membrane (bilayer/monolayer or lipid droplet systems). This includes interdigitation analysis, tail order parameters (Scd), surface molecule lifetimes.
+
+# Interdigitation Analysis
 
 The overlap parameter, $\rho_{ov}(z)$, ranges from **0 to 1**, where:
 - **0** indicates no overlap.
@@ -36,7 +37,7 @@ We can then determine the diferent types of interdigition. For example, in a LD 
   <img src="https://github.com/user-attachments/assets/5162b67b-e262-4baf-8f7f-9cbd95f1b6e4" width="180"/>
 </td>
 <td>
-  <b>Strong interdigitation</b> has correlation with the area-per-lipid of monolayer systems.
+  <b>Strong interdigitation</b> has implications to biological systems. For example, it correlates with the area-per-lipid of membranes, leading to larger membrane defects.
 </td>
 </tr>
 </table>
@@ -210,25 +211,6 @@ The output contains **surface residence times per molecule**:
 ```
 
 where keys represent **molecule IDs** and values are **lifetimes**.
-
-### **Visualizing Surf-TG Lifetimes**  
-```python
-import json
-import matplotlib.pyplot as plt
-
-with open("lifetime_results/trio_lifetimes.json", "r") as f:
-    lifetime_data = json.load(f)
-
-all_lifetimes = [time for lifetimes in lifetime_data.values() for time in lifetimes]
-
-plt.figure(figsize=(6, 4))
-plt.hist(all_lifetimes, bins=30, alpha=0.7, color="blue", edgecolor="black")
-plt.xlabel("Surface Lifetime (frames)")
-plt.ylabel("Frequency")
-plt.title("Distribution of Surf-TG Lifetimes")
-plt.grid()
-plt.show()
-```
 
 ---
 
