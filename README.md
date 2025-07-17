@@ -119,7 +119,7 @@ This calculation is performed using **MDAnalysis** and follows these steps:
 <table>
 <tr>
 <td>
-  <img src="images/Screenshot%20(1829).png" width="400"/>
+  <img src="Screenshot%20(1829).png" width="400"/>
 </td>
 <td>
   <b>Tail order parameter</b> of different forcefields and system paramters provides insight to physical properties of the biological membrane.
